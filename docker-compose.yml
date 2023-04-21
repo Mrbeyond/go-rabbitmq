@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  app:
+    container_name: rabbit_app
+    build:
+      context: project
+    restart: on-failure
+    ports:
+      - "8086:8080"
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+    networks:
+      - rabbitnet
+
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - rabbitnet
+
+networks:
+  rabbitnet:
+    driver: bridge
