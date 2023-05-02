@@ -2,6 +2,7 @@ FROM golang:alpine
 
 LABEL maintainer="Mr Beyond"
 
+# Git is required for fetching the dependencies.
 RUN apk update && apk add --no-cache git && apk add --no-cach bash && apk add build-base
 
 RUN mkdir /app

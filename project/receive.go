@@ -9,7 +9,7 @@ import (
 
 func Receiver() {
 
-	log.Println("\n\n\n\n ", os.Getenv("RABBITMQ_URL"), "\n\n\n\n ")
+	log.Println("\n\n\n\n  From Receiver", os.Getenv("RABBITMQ_URL"), "\n\n\n\n ")
 	conn, err := amqp.Dial(os.Getenv("RABBITMQ_URL"))
 	FailOnError(err, "Cannot open rabbitMQ connection from Receiver \n\n ")
 	defer conn.Close()
@@ -42,7 +42,7 @@ func Receiver() {
 
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
+			log.Printf("\n\n\n Received a message: %s \n\n\n ", d.Body)
 		}
 	}()
 

@@ -37,6 +37,7 @@ func Sender() {
 	body := "Helllo from sender"
 
 	timer := time.NewTicker(2 * time.Second)
+	after := time.NewTimer(20 * time.Second)
 
 	for {
 		select {
@@ -56,9 +57,15 @@ func Sender() {
 			FailOnError(err, "Failed to publish a message")
 			log.Printf(" [x] Sent %s\n", body)
 
-		case <-time.After(20 * time.Second):
-			timer.Stop()
+		case <-after.C:
+			after.Stop()
 			return
 		}
+	}
+}
+
+func FailOnError(err error, msg string) {
+	if err != nil {
+		log.Panicf("%s: %s", msg, err)
 	}
 }

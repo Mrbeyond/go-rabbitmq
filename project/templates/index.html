@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js" 
+    integrity="sha512-iKDtgDyTHjAitUDdLljGhenhPwrbBfqTKWO1mkhSFH3A7blITC9MhYon6SjnMhp4o0rADGw9yAC6EW4t5a4K3g==" \
+    crossorigin="anonymous" referrerpolicy="no-referrer">
+  </script> -->
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@5.0.0/bundles/stomp.umd.min.js"></script>
+  <style>
+    .sender{
+      position: fixed;
+      bottom: 100px;
+      right: 100px;
+
+    }
+  </style>
+</head>
+<body>
+  <h1>GO Web Socket</h1>
+  <h3>Host: {{ .Host }}</h3>
+
+  <section>
+    <div id="board">
+
+    </div>
+    <button class="sender" onclick="sendMessage()">Send</button>
+  </section>
+  
+</body>
+<script>
+  let user = window.location.search.slice(1).split("&").find(q=>q.startsWith("user"))
+  // location.
+  if (user) {
+    user = user.slice(user.indexOf("=")+1)
+  }else {
+    const rand = Array.from((Math.random()* 100000000).toFixed(0)).map(n=>{
+      const int8 = Number(n)*10 + 60;
+      return int8 > 225 ? 225 : int8
+    })
+    // console.log({rand});
+    const int8 = new Int8Array(rand)
+    user = String.fromCharCode.apply(null, int8);    
+  }
+  console.log({user});
+
+if (window.StompJs){
+  console.log(window.StompJs)
+  // Create a new WebSocket client and connect to the RabbitMQ broker
+  //const client = Stomp.client('ws://localhost:5672/ws');
+  //client.connect('1guest', 'guest', onConnect, onError);
+  const client = new StompJs.Client({
+    brokerURL: 'ws://localhost:5672/ws',
+    connectHeaders: {
+      login: 'guest',
+      passcode: 'guest'
+    },
+    debug: function (str) {
+      console.log(str);
+    },
+    reconnectDelay: 20_000,
+    heartbeatIncoming: 4000,
+    heartbeatOutgoing: 4000,
+  });
+  
+  client.onConnect = function (frame) {
+    // Do something, all subscribes must be done is this callback
+    // This is needed because this will be executed after a (re)connect
+    client.subscribe('/queue/'+user, onMessage);
+
+  };
+  
+  client.onStompError = function (frame) {
+    // Will be invoked in case of error encountered at Broker
+    // Bad login/passcode typically will cause an error
+    // Complaint brokers will set `message` header with a brief message. Body may contain details.
+    // Compliant brokers will terminate the connection after any error
+    console.log('Broker reported error: ' + frame.headers['message']);
+    console.log('Additional details: ' + frame.body);
+  };
+  
+  client.activate();
+}
+
+// This function is called when the connection is established
+function onConnect() {
+  console.log('Connected to RabbitMQ');
+  
+  // Subscribe to a queue
+  client.subscribe('/queue/'+user, onMessage);
+  
+  // Send a message to the queue
+  //client.send('/queue/'+user, {}, 'Hello, World!');
+}
+
+async function sendMessage(){
+  try{
+    const url = "http://localhost:8086/notification/"+user
+    const req = await  fetch(url)
+    const res = await req.text()
+    console.log({res})
+  }catch(err){
+    console.log(err)
+  }
+}
+// This function is called when a message is received
+function onMessage(message) {
+  const board = document.getElementById("board");
+  board.innerHTML += "<div>"+  message.body+"<div><br>"
+  document.documentElement.scrollTo({top: document.documentElement.scrollHeight, behavior:"smooth"})
+}
+
+// This function is called if there's an error
+function onError(error) {
+  console.error('Error:', error);
+}
+
+
+</script>
+</html>
